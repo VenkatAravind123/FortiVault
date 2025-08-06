@@ -1,0 +1,127 @@
+.password-manager {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  /* color: #646cff; */
+  margin-bottom: 1rem;
+}
+
+.header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+}
+
+nav button {
+  padding: 0.6em 1.2em;
+  transition: all 0.2s;
+}
+
+nav button.active {
+  background-color: #646cff;
+  color: white;
+  
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-email {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.logout-button {
+  font-size: 0.9rem;
+  padding: 0.4em 0.8em;
+}
+
+main {
+  flex-grow: 1;
+}
+
+footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #333;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.2rem;
+  color: #646cff;
+}
+
+@media (max-width: 768px) {
+  .header-wrapper {
+    flex-direction: column;
+  }
+  
+  nav {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Add these new styles */
+.logo-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.app-logo {
+  height: 50px; /* Adjust based on your logo size */
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.app-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Adjust existing header styles */
+header h1 {
+  color: #646cff;
+  margin: 0; /* Remove margin since it's handled by logo-section */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .logo-section {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .app-logo {
+    height: 40px; /* Slightly smaller on mobile */
+  }
+}

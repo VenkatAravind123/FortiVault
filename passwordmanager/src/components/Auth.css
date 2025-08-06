@@ -1,0 +1,439 @@
+/* Auth forms */
+body {
+  background: linear-gradient(135deg, #646cff 0%, #18181b 100%);
+  min-height: 100vh;
+}
+.auth-form {
+  background: rgba(34, 34, 40, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(100, 108, 255, 0.15);
+  padding-right: 4rem;
+  padding-left: 4rem;
+  padding-top: 3rem;
+  padding-bottom: 2rem;;
+  max-width: 400px;
+  margin: 3rem auto;
+  color: #fff;
+  transition: box-shadow 0.2s;
+}
+  
+.auth-form h2 {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  color: #646cff;
+  font-weight: 700;
+}
+  /* .form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+  } */
+  
+  .form-group label {
+  font-weight: 600;
+  color: #aab4ff;
+}
+
+.form-group input {
+  background: #23233a;
+  border: 1px solid #646cff;
+  color: #fff;
+  font-size: 1em;
+  padding: 0.7em 1em;
+  border-radius: 8px;
+  margin-top: 0.3em;
+  margin-bottom: 1.2em;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+/*   
+  .form-help {
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    color: #888;
+  }
+   */
+   .form-group input:focus {
+  border-color: #535bf2;
+  outline: none;
+}
+  .error-message {
+    color: #ff6b6b;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: rgba(255, 107, 107, 0.1);
+    border-radius: 4px;
+  }
+  
+  .form-switch {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .text-button {
+    background: none;
+    border: none;
+    color: #646cff;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    box-shadow: none;
+  }
+  
+  .text-button:hover {
+    color: #535bf2;
+    text-decoration: underline;
+    background: none;
+  }
+  
+  .primary-button {
+  background: linear-gradient(90deg, #646cff 60%, #535bf2 100%);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  padding: 0.8em 1.5em;
+  border-radius: 8px;
+  font-size: 1.1em;
+  box-shadow: 0 2px 8px rgba(100, 108, 255, 0.15);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+  
+ .primary-button:hover {
+  background: linear-gradient(90deg, #535bf2 60%, #646cff 100%);
+}
+  
+  /* Password vault */
+  .vault-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .vault-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .search-container {
+    position: relative;
+  }
+  
+  .search-input {
+    padding-left: 2.2rem;
+    width: 250px;
+  }
+  
+  .passwords-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .password-item {
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  
+  .password-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .password-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #3a3a3a;
+    padding-bottom: 0.8rem;
+  }
+  
+  .password-item-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+  
+  .last-updated {
+    font-size: 0.8rem;
+    color: #888;
+  }
+  
+  .detail-row {
+    display: flex;
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+  }
+  
+  .detail-label {
+    width: 80px;
+    color: #888;
+    flex-shrink: 0;
+  }
+  
+  .detail-value-with-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    word-break: break-word;
+  }
+  
+  .icon-button {
+    padding: 0.3em 0.6em;
+    font-size: 0.8em;
+    min-width: 50px;
+  }
+  
+  .password-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+  }
+  
+  .edit-button, .delete-button {
+    padding: 0.4em 1em;
+  }
+  
+  .delete-button {
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.2);
+  }
+  
+  .delete-button:hover {
+    background-color: rgba(255, 107, 107, 0.1);
+    border-color: #ff6b6b;
+  }
+  
+  .notes {
+    align-items: flex-start;
+  }
+  
+  .detail-value {
+    flex: 1;
+    word-break: break-word;
+  }
+  
+  .loading, .no-passwords {
+    text-align: center;
+    padding: 2rem;
+    color: #888;
+  }
+  
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  
+  .modal-content {
+    background-color: #2a2a2a;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  /* Password Generator */
+  .generated-password {
+    display: flex;
+    margin-bottom: 1.5rem;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #444;
+  }
+  
+  .password-display {
+    flex: 1;
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-align: left;
+    word-break: break-all;
+  }
+  
+  .password-actions {
+    display: flex;
+    border-left: 1px solid #444;
+  }
+  
+  .refresh-button, .copy-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: #2a2a2a;
+    border-radius: 0;
+  }
+  
+  .refresh-button:hover, .copy-button:hover {
+    background-color: #3a3a3a;
+    border: none;
+  }
+  
+  .copied-notification {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #646cff;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    animation: fadeIn 0.3s, fadeOut 0.3s 1.7s;
+    z-index: 100;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  
+  .option-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  
+  .option-group input[type="range"] {
+    flex: 1;
+  }
+  
+  .range-value {
+    width: 2rem;
+    text-align: center;
+    font-weight: bold;
+  }
+  
+  .checkbox-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.8rem;
+  }
+  
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: left;
+  }
+  
+  .password-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+  }
+  
+  .strength-label {
+    font-weight: 500;
+  }
+  
+  .strength-value {
+    font-weight: bold;
+  }
+  
+  .strength-meter {
+    flex: 1;
+    height: 8px;
+    background-color: #444;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .strength-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s;
+  }
+  
+  .strength-bar.weak {
+    width: 30%;
+    background-color: #ff6b6b;
+  }
+  
+  .strength-bar.medium {
+    width: 65%;
+    background-color: #ffd166;
+  }
+  
+  .strength-bar.strong {
+    width: 100%;
+    background-color: #06d6a0;
+  }
+  
+  .security-tips {
+    margin-top: 2rem;
+    text-align: left;
+    padding: 1.5rem;
+    background-color: rgba(100, 108, 255, 0.1);
+    border-radius: 8px;
+  }
+  
+  .security-tips h3 {
+    margin-top: 0;
+    color: #646cff;
+  }
+  
+  .security-tips ul {
+    padding-left: 1.5rem;
+  }
+  
+  .security-tips li {
+    margin-bottom: 0.5rem;
+  }
+
+  .text-button:hover {
+  color: #535bf2;
+  text-decoration: underline;
+}
+
+.error-message {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  border-radius: 6px;
+  padding: 0.7em 1em;
+  margin-bottom: 1em;
+  font-weight: 500;
+  font-size: 1em;
+}
+
+.form-switch {
+  margin-top: 2rem;
+  font-size: 1em;
+  color: #aab4ff;
+  text-align: center;
+}
