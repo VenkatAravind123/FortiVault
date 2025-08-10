@@ -6,66 +6,103 @@ function PasswordVault() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newPassword, setNewPassword] = useState({
-    title: '',
+    website: '',
+    websiteUrl: '',
     username: '',
     password: '',
-    url: '',
-    notes: ''
+    
   });
   const [searchTerm, setSearchTerm] = useState('');
 
   // Mock data for demonstration - would be fetched from API in production
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setPasswords([
-        {
-          id: '1',
-          title: 'Gmail',
-          username: 'user@gmail.com',
-          password: 'Encrypted_Password_1',
-          url: 'https://mail.google.com',
-          notes: 'Personal email account',
-          lastUpdated: '2023-04-10'
-        },
-        {
-          id: '2',
-          title: 'GitHub',
-          username: 'developer123',
-          password: 'Encrypted_Password_2',
-          url: 'https://github.com',
-          notes: 'Work account',
-          lastUpdated: '2023-03-25'
-        },
-        {
-          id: '3',
-          title: 'Netflix',
-          username: 'family.account',
-          password: 'Encrypted_Password_3',
-          url: 'https://netflix.com',
-          notes: 'Family subscription',
-          lastUpdated: '2023-02-18'
-        }
-      ]);
+  // useEffect(() => {
+  //   // Simulate API call
+  //   setTimeout(() => {
+  //     setPasswords([
+  //       {
+  //         id: '1',
+  //         website: 'Gmail',
+  //         username: 'user@gmail.com',
+  //         password: 'Encrypted_Password_1',
+  //         websiteUrl: 'https://mail.google.com',
+  //         lastUpdated: '2023-04-10'
+  //       },
+  //       {
+  //         id: '2',
+  //         website: 'GitHub',
+  //         username: 'developer123',
+  //         password: 'Encrypted_Password_2',
+  //         websiteUrl: 'https://github.com',
+  //         lastUpdated: '2023-03-25'
+  //       },
+  //       {
+  //         id: '3',
+  //         website: 'Netflix',
+  //         username: 'family.account',
+  //         password: 'Encrypted_Password_3',
+  //         websiteUrl: 'https://netflix.com',
+  //         lastUpdated: '2023-02-18'
+  //       }
+  //     ]);
+  //     setIsLoading(false);
+  //   }, 800);
+  // }, []); // <--- Make sure this is an empty array!
+useEffect(() => {
+  const fetchPasswords = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:2025/api/passwords/getpasswords', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      setPasswords(Array.isArray(data.passwords) ? data.passwords : []);
+    } catch (err) {
+      setPasswords([]);
+      console.error('Error fetching passwords:', err);
+    } finally {
       setIsLoading(false);
-    }, 800);
-  }, []);
-
-  const handleAddPassword = (e) => {
-    e.preventDefault();
-    
-    // In production, would encrypt password before saving
-    const newEntry = {
-      id: Date.now().toString(),
-      ...newPassword,
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
-    
-    setPasswords([...passwords, newEntry]);
-    setNewPassword({ title: '', username: '', password: '', url: '', notes: '' });
-    setShowAddForm(false);
+    }
   };
 
+  fetchPasswords();
+}, []);
+  
+
+  const addPasswordToServer = async (passwordData) => {
+  const response = await fetch('http://localhost:2025/api/passwords/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(passwordData)
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to add password');
+  return data;
+};
+
+  const handleAddPassword = async (e) => {
+    e.preventDefault();
+
+    // In production, would encrypt password before saving
+    try {
+      const passwordData = {
+        website: newPassword.website,
+        websiteUrl: newPassword.websiteUrl,
+        username: newPassword.username,
+        password: newPassword.password,
+        
+      };
+      const result = await addPasswordToServer(passwordData);
+      setPasswords(Array.isArray(result.passwords) ? result.passwords : []);// Update with latest from server
+      setNewPassword({ website: '', websiteUrl: '', username: '', password: '' });
+      setShowAddForm(false);
+    } catch (err) {
+      alert(err.message || 'Failed to add password');
+    }
+  };
+
+  // ---- These functions were incorrectly nested! ----
   const handleChange = (e) => {
     setNewPassword({
       ...newPassword,
@@ -77,13 +114,13 @@ function PasswordVault() {
     setPasswords(passwords.filter(password => password.id !== id));
   };
 
-  const filteredPasswords = searchTerm
-    ? passwords.filter(pw => 
-        pw.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        pw.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pw.url.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : passwords;
+const filteredPasswords = searchTerm
+  ? passwords.filter(pw => 
+      (pw.website && pw.website.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (pw.username && pw.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (pw.websiteUrl && pw.websiteUrl.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+  : passwords;
 
   return (
     <div className="vault-container">
@@ -112,7 +149,7 @@ function PasswordVault() {
         <div className="loading">Loading your passwords...</div>
       ) : (
         <div className="passwords-list">
-          {filteredPasswords.length > 0 ? (
+          {Array.isArray(filteredPasswords) && filteredPasswords.length > 0 ? (
             filteredPasswords.map(password => (
               <PasswordItem 
                 key={password.id}
@@ -137,9 +174,9 @@ function PasswordVault() {
                 <label htmlFor="title">Title</label>
                 <input
                   type="text"
-                  id="title"
-                  name="title"
-                  value={newPassword.title}
+                  id="website"
+                  name="website"
+                  value={newPassword.website}
                   onChange={handleChange}
                   required
                 />
@@ -172,24 +209,15 @@ function PasswordVault() {
               <div className="form-group">
                 <label htmlFor="url">Website URL</label>
                 <input
-                  type="url"
-                  id="url"
-                  name="url"
-                  value={newPassword.url}
+                  type="websiteUrl"
+                  id="websiteUrl"
+                  name="websiteUrl"
+                  value={newPassword.websiteUrl}
                   onChange={handleChange}
                 />
               </div>
               
-              <div className="form-group">
-                <label htmlFor="notes">Notes</label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  value={newPassword.notes}
-                  onChange={handleChange}
-                  rows="3"
-                />
-              </div>
+              
               
               <div className="form-actions">
                 <button type="button" onClick={() => setShowAddForm(false)}>

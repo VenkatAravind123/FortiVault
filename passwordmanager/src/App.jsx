@@ -1,90 +1,141 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import './components/Auth.css'
-import LoginForm from './components/LoginForm'
-import RegisterForm from './components/RegisterForm'
-import PasswordVault from './components/PasswordVault'
-import PasswordGenerator from './components/PasswordGenerator'
-import logo from './assets/Vault.png' // Add your logo import
+import { useState, useEffect } from 'react';
+import './App.css';
+import './components/Auth.css';
+import LoginForm from './components/LoginForm';
+import RegisterForm from './components/RegisterForm';
+import PasswordVault from './components/PasswordVault';
+import PasswordGenerator from './components/PasswordGenerator';
+import LoadingSpinner from './components/LoadingSpinner';
+import logo from './assets/vault.png';
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentView, setCurrentView] = useState('login'); // login, register, vault, generator
+  const [currentView, setCurrentView] = useState('login');
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Check if user is already logged in (via stored token)
+  // Verify authentication status on app load
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          // In production: Verify token with backend
-          // For demo: Just check if token exists
-          setUser({
-            email: localStorage.getItem('userEmail') || 'user@example.com',
-            role: localStorage.getItem('userRole') || 'user'
-          });
-          setIsAuthenticated(true);
-          setCurrentView('vault');
+        const res = await fetch("http://localhost:2025/api/auth/verify", {
+          method: "GET",
+          credentials: "include", // <-- Important!
+        });
+
+        if (!res.ok) {
+          throw new Error("Session expired");
         }
+        const data = await res.json();
+        setUser(data.user);
+        setIsAuthenticated(true);
+        setCurrentView('vault');
       } catch (error) {
-        console.error('Authentication error:', error);
-        localStorage.removeItem('authToken');
+        console.error("Authentication error:", error);
+        setIsAuthenticated(false);
+        setCurrentView('login');
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     checkAuth();
   }, []);
 
-  const handleLogin = (credentials) => {
+  // Update the handleLogin function
+  const handleLogin = async (credentials) => {
     setIsLoading(true);
-    // In production: API call to authenticate
-    setTimeout(() => {
-      // Mock successful login
-      const mockUser = {
-        id: '12345',
-        email: credentials.email,
-        role: 'user'
-      };
-      
-      // Store auth data
-      localStorage.setItem('authToken', 'mock-jwt-token');
-      localStorage.setItem('userEmail', mockUser.email);
-      localStorage.setItem('userRole', mockUser.role);
-      
-      setUser(mockUser);
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:2025/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include', // <-- Important!
+        body: JSON.stringify(credentials)
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server error: Invalid response format');
+      }
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      setUser(data.user);
       setIsAuthenticated(true);
       setCurrentView('vault');
+    } catch (error) {
+      console.error('Login error:', error);
+      setError(error.message || 'Server connection failed. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 800); // Simulate API delay
+    }
   };
 
-  const handleRegister = (userData) => {
+  // Update the handleRegister function similarly
+  const handleRegister = async (userData) => {
     setIsLoading(true);
-    // In production: API call to register user
-    setTimeout(() => {
-      // Mock successful registration
-      console.log('User registered:', userData);
-      
-      // Auto-login after registration
-      handleLogin({
-        email: userData.email,
-        password: userData.password
+    setError(null);
+    try {
+      const response = await fetch('http://localhost:2025/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include', // <-- Important!
+        body: JSON.stringify(userData)
       });
-    }, 800); // Simulate API delay
+
+      let data;
+      try {
+        data = await response.json();
+        console.log('Registration response:', data);
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Invalid server response');
+      }
+
+      if (data.user) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        setCurrentView('vault');
+        return;
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+    } catch (error) {
+      console.error('Registration error details:', error);
+      setError(error.message || 'Server connection failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLogout = () => {
-    // Clear stored auth data
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
-    
-    setUser(null);
-    setIsAuthenticated(false);
-    setCurrentView('login');
+  const handleLogout = async () => {
+    try {
+      await fetch('http://localhost:2025/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      setUser(null);
+      setIsAuthenticated(false);
+      setCurrentView('login');
+      setError(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      setError(error.message);
+    }
   };
 
   const renderAuthContent = () => {
@@ -92,29 +143,33 @@ function App() {
       return (
         <LoginForm 
           onLogin={handleLogin} 
-          onSwitchToRegister={() => setCurrentView('register')} 
-        />
-      );
-    } else {
-      return (
-        <RegisterForm 
-          onRegister={handleRegister} 
-          onSwitchToLogin={() => setCurrentView('login')} 
+          onSwitchToRegister={() => setCurrentView('register')}
+          error={error}
         />
       );
     }
+    return (
+      <RegisterForm 
+        onRegister={handleRegister} 
+        onSwitchToLogin={() => setCurrentView('login')}
+        error={error}
+      />
+    );
   };
 
   const renderAppContent = () => {
-    if (currentView === 'vault') {
-      return <PasswordVault user={user} />;
-    } else if (currentView === 'generator') {
-      return <PasswordGenerator />;
+    switch (currentView) {
+      case 'vault':
+        return <PasswordVault user={user} />;
+      case 'generator':
+        return <PasswordGenerator />;
+      default:
+        return <PasswordVault user={user} />;
     }
   };
 
-  if (isLoading && !isAuthenticated) {
-    return <div className="loading-container">Loading...</div>;
+  if (isLoading) {
+    return <LoadingSpinner />;
   }
 
   return (
@@ -142,19 +197,36 @@ function App() {
             </nav>
             
             <div className="user-section">
-              <span className="user-email">{user?.email}</span>
-              <button onClick={handleLogout} className="logout-button">Logout</button>
+              <span className="user-email">{user.email}</span>
+              <button 
+                onClick={handleLogout} 
+                className="logout-button"
+                title="Logout"
+              >
+                Logout
+              </button>
             </div>
           </div>
         )}
       </header>
       
       <main>
+        {error && !isAuthenticated && (
+          <div className="error-banner">
+            {error}
+            <button 
+              className="error-close" 
+              onClick={() => setError(null)}
+            >
+              ×
+            </button>
+          </div>
+        )}
         {isAuthenticated ? renderAppContent() : renderAuthContent()}
       </main>
       
       <footer>
-        <p>© 2025 Secure Password Manager | Enterprise Edition</p>
+        <p>© {new Date().getFullYear()} Secure Password Manager | Enterprise Edition</p>
       </footer>
     </div>
   );
