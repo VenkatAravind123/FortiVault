@@ -1,9 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const userRoutes = require('./routes/userRoutes.jsx')
 const passwordRoutes = require('./routes/passwordRoutes.jsx');
 const authRoutes = require('./routes/authRoutes.jsx');
+const safeRoutes = require('./routes/safeRoutes.js')
 const cookieParser = require('cookie-parser')
 require('dotenv').config();
 
@@ -32,6 +34,7 @@ mongoose.connect(dburl).then(() => {
 app.use('/api/auth', authRoutes);
 app.use('/api/passwords', passwordRoutes);
 // app.use('/api/users', userRoutes);
+app.use('/api/safe',safeRoutes)
 
 // Server Port
 const PORT = process.env.PORT || 2025;

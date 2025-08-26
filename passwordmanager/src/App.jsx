@@ -7,7 +7,7 @@ import PasswordVault from './components/PasswordVault';
 import PasswordGenerator from './components/PasswordGenerator';
 import LoadingSpinner from './components/LoadingSpinner';
 import logo from './assets/vault.png';
-
+import config from './config'
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState('login');
@@ -19,7 +19,7 @@ function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("http://localhost:2025/api/auth/verify", {
+        const res = await fetch(`${config.url}/api/auth/verify`, {
           method: "GET",
           credentials: "include", // <-- Important!
         });
@@ -48,7 +48,7 @@ function App() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:2025/api/auth/login', {
+      const response = await fetch(`${config.url}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ function App() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:2025/api/auth/register', {
+      const response = await fetch(`${config.url}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,11 +120,11 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
+  };  
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:2025/api/auth/logout', {
+      await fetch(`${config.url}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       });

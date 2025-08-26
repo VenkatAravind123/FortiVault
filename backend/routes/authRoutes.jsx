@@ -8,7 +8,14 @@ const auth = require('../middleware/auth.jsx');
 response.post('/register', register);
 response.post('/login', login);
 response.get('/verify',auth,verifyToken);
-
+response.post('/logout', (req, res) => {
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+    res.json({ success: true, message: 'Logged out successfully' });
+});
 
 
 

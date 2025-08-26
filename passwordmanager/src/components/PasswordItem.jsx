@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { FiExternalLink } from "react-icons/fi";
 export default function PasswordItem({ password, onDelete }) {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -9,7 +9,7 @@ export default function PasswordItem({ password, onDelete }) {
         <strong>{password.website}</strong>
         {password.websiteUrl && (
           <a href={password.websiteUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 8 }}>
-            Visit
+            <FiExternalLink />
           </a>
         )}
       </div>
@@ -27,7 +27,7 @@ export default function PasswordItem({ password, onDelete }) {
       </div>
       <button
         className="delete-btn"
-        onClick={() => onDelete(password.id)}
+        onClick={() => onDelete(password._id)}
         style={{ marginTop: 8 }}
       >
         Delete

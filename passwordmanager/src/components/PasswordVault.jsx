@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import PasswordItem from './PasswordItem';
+import config from '../config';
 
 function PasswordVault() {
   const [passwords, setPasswords] = useState([]);
@@ -10,99 +11,98 @@ function PasswordVault() {
     websiteUrl: '',
     username: '',
     password: '',
-    
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [warning, setWarning] = useState(''); // ✅ For Safe Browsing warnings
 
-  // Mock data for demonstration - would be fetched from API in production
-  // useEffect(() => {
-  //   // Simulate API call
-  //   setTimeout(() => {
-  //     setPasswords([
-  //       {
-  //         id: '1',
-  //         website: 'Gmail',
-  //         username: 'user@gmail.com',
-  //         password: 'Encrypted_Password_1',
-  //         websiteUrl: 'https://mail.google.com',
-  //         lastUpdated: '2023-04-10'
-  //       },
-  //       {
-  //         id: '2',
-  //         website: 'GitHub',
-  //         username: 'developer123',
-  //         password: 'Encrypted_Password_2',
-  //         websiteUrl: 'https://github.com',
-  //         lastUpdated: '2023-03-25'
-  //       },
-  //       {
-  //         id: '3',
-  //         website: 'Netflix',
-  //         username: 'family.account',
-  //         password: 'Encrypted_Password_3',
-  //         websiteUrl: 'https://netflix.com',
-  //         lastUpdated: '2023-02-18'
-  //       }
-  //     ]);
-  //     setIsLoading(false);
-  //   }, 800);
-  // }, []); // <--- Make sure this is an empty array!
-useEffect(() => {
-  const fetchPasswords = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('http://localhost:2025/api/passwords/getpasswords', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await response.json();
-      setPasswords(Array.isArray(data.passwords) ? data.passwords : []);
-    } catch (err) {
-      setPasswords([]);
-      console.error('Error fetching passwords:', err);
-    } finally {
-      setIsLoading(false);
-    }
+  // Fetch existing passwords
+  useEffect(() => {
+    const fetchPasswords = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`${config.url}/api/passwords/getpasswords`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+        const data = await response.json();
+        setPasswords(Array.isArray(data.passwords) ? data.passwords : []);
+      } catch (err) {
+        setPasswords([]);
+        console.error('Error fetching passwords:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPasswords();
+  }, []);
+
+  // Add new password to server
+  const addPasswordToServer = async (passwordData) => {
+    const response = await fetch(`${config.url}/api/passwords/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(passwordData)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to add password');
+    return data;
   };
 
-  fetchPasswords();
-}, []);
-  
+  // ✅ Verify the URL before saving password
+  async function verifyUrl(url) {
+    try {
+      const res = await fetch(`${config.url}/api/safe/check`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
 
-  const addPasswordToServer = async (passwordData) => {
-  const response = await fetch('http://localhost:2025/api/passwords/add', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(passwordData)
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || 'Failed to add password');
-  return data;
-};
+      const data = await res.json();
 
+      if (!data.safe) {
+        setWarning(`⚠️ This site may be unsafe! Threats: ${data.threats.map(t => t.threatType).join(", ")}`);
+        return false;
+      }
+      setWarning('');
+      return true;
+    } catch (err) {
+      console.error("Error verifying URL:", err);
+      setWarning('⚠️ Could not verify site safety. Proceed with caution.');
+      return true; // fallback (allow saving if check fails)
+    }
+  }
+
+  // Handle add password
   const handleAddPassword = async (e) => {
     e.preventDefault();
 
-    // In production, would encrypt password before saving
     try {
+      // ✅ Check the website URL if provided
+      if (newPassword.websiteUrl) {
+        const isSafe = await verifyUrl(newPassword.websiteUrl);
+        if (!isSafe) return; // Stop if unsafe
+      }
+
       const passwordData = {
         website: newPassword.website,
         websiteUrl: newPassword.websiteUrl,
         username: newPassword.username,
         password: newPassword.password,
-        
       };
+
       const result = await addPasswordToServer(passwordData);
-      setPasswords(Array.isArray(result.passwords) ? result.passwords : []);// Update with latest from server
+      setPasswords(Array.isArray(result.passwords) ? result.passwords : []);
       setNewPassword({ website: '', websiteUrl: '', username: '', password: '' });
       setShowAddForm(false);
+      setWarning('');
     } catch (err) {
       alert(err.message || 'Failed to add password');
     }
   };
 
-  // ---- These functions were incorrectly nested! ----
+  // Handle input changes
   const handleChange = (e) => {
     setNewPassword({
       ...newPassword,
@@ -110,17 +110,33 @@ useEffect(() => {
     });
   };
 
-  const handleDelete = (id) => {
-    setPasswords(passwords.filter(password => password.id !== id));
+  // Handle delete password
+  const handleDelete = async (passwordId) => {
+    try {
+      const response = await fetch(`${config.url}/api/passwords/delete/${passwordId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPasswords(data.passwords);
+      } else {
+        alert(data.message || 'Failed to delete password');
+      }
+    } catch (err) {
+      console.log(err);
+      alert('Failed to delete password');
+    }
   };
 
-const filteredPasswords = searchTerm
-  ? passwords.filter(pw => 
-      (pw.website && pw.website.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (pw.username && pw.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (pw.websiteUrl && pw.websiteUrl.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-  : passwords;
+  // Filtered search
+  const filteredPasswords = searchTerm
+    ? passwords.filter(pw => 
+        (pw.website && pw.website.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (pw.username && pw.username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (pw.websiteUrl && pw.websiteUrl.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : passwords;
 
   return (
     <div className="vault-container">
@@ -152,7 +168,7 @@ const filteredPasswords = searchTerm
           {Array.isArray(filteredPasswords) && filteredPasswords.length > 0 ? (
             filteredPasswords.map(password => (
               <PasswordItem 
-                key={password.id}
+                key={password._id}
                 password={password}
                 onDelete={handleDelete}
               />
@@ -209,21 +225,22 @@ const filteredPasswords = searchTerm
               <div className="form-group">
                 <label htmlFor="url">Website URL</label>
                 <input
-                  type="websiteUrl"
+                  type="text"
                   id="websiteUrl"
                   name="websiteUrl"
                   value={newPassword.websiteUrl}
                   onChange={handleChange}
                 />
               </div>
-              
-              
+
+              {/* ✅ Inline Safe Browsing Warning */}
+              {warning && <p style={{ color: 'red', fontWeight: 'bold' }}>{warning}</p>}
               
               <div className="form-actions">
                 <button type="button" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="primary-button">
+                <button type="submit" className="primary-button" disabled={!!warning}>
                   Save Password
                 </button>
               </div>
