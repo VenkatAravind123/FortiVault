@@ -1,44 +1,58 @@
-const User = require('../models/User.js')
+const { encrypt,decrypt } = require("../utils/cryptoUtil.jsx");
+const { checkPasswordBreached } = require("../utils/hbpUtil.jsx");
+const User = require("../models/User");
+
 const addPassword = async (req, res) => {
-    try {
-        const { website, websiteUrl, username, password } = req.body;
-        if (!website || !password) {
-            return res.json({ success: false, message: "Website and password are required" });
-        }
-
-        const user = await User.findById(req.userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
-
-        user.passwords.push({
-            website,
-            websiteUrl,
-            username,
-            password
-        });
-
-        await user.save();
-        res.json({ success: true, message: "Password added successfully" });
-    } catch (error) {
-        console.error('Error adding password:', error);
-        res.status(500).json({ success: false, message: 'Failed to add password' });
+  try {
+    const { website, websiteUrl, username, password } = req.body;
+    if (!website || !password) {
+      return res.json({ success: false, message: "Website and password are required" });
     }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // 🔐 Encrypt password before storing
+    const encryptedPassword = encrypt(password);
+
+
+    user.passwords.push({
+      website,
+      websiteUrl,
+      username,
+      password: encryptedPassword
+    });
+
+    await user.save();
+    res.json({ success: true, message: "Password added successfully" });
+  } catch (error) {
+    console.error("Error adding password:", error);
+    res.status(500).json({ success: false, message: "Failed to add password" });
+  }
 };
+
 
 const getPasswords = async (req, res) => {
-    try {
-        const user = await User.findById(req.userId);
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
-        // Just return the passwords as they are in the DB
-        res.json({ success: true, passwords: user.passwords || [] });
-    } catch (error) {
-        console.error('Error fetching passwords:', error);
-        res.status(500).json({ success: false, message: 'Failed to fetch passwords' });
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
     }
+
+    const decryptedPasswords = user.passwords.map(p => ({
+      ...p._doc,
+      password: decrypt(p.password)
+    }));
+
+    res.json({ success: true, passwords: decryptedPasswords });
+  } catch (error) {
+    console.error("Error fetching passwords:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch passwords" });
+  }
 };
+
 const deletePassword = async (req, res) => {
     try {
         const { passwordId } = req.params;
@@ -57,5 +71,6 @@ const deletePassword = async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to delete password' });
     }
 };
+
 
 module.exports = { addPassword, getPasswords, deletePassword }

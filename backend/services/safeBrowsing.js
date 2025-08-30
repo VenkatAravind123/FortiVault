@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const API_KEY = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
-console.log("Loaded Safe Browsing API key:", API_KEY);
+//console.log("Loaded Safe Browsing API key:", API_KEY);
 const SAFE_BROWSING_URL = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${API_KEY}`;
 
 async function checkUrlSafety(url) {

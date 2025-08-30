@@ -2,6 +2,7 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import './Auth.css';
+import config from '../config';
 function RegisterForm({ onRegister, onSwitchToLogin }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -10,20 +11,38 @@ function RegisterForm({ onRegister, onSwitchToLogin }) {
     confirmPassword: ''
   });
 
+  const [breachWarning, setBreachWarning] = useState('');
+const [breachCount, setBreachCount] = useState(0);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [name]: value
+  //   }));
+  //   if (error) setError('');
+  // };
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (error) setError('');
-  };
+  const { name, value } = e.target;
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+  if (error) setError('');
+
+  // Live breach check for master password
+  if (name === "masterPassword") {
+    clearTimeout(window.hibpTimeout);
+    window.hibpTimeout = setTimeout(() => {
+      verifyPasswordBreach(value);
+    }, 600);
+  }
+};
 
   const validatePassword = (password) => {
     const minLength = 12;
@@ -46,40 +65,55 @@ function RegisterForm({ onRegister, onSwitchToLogin }) {
     }
     return '';
   };
-
+const verifyPasswordBreach = async (password) => {
+  if (!password) {
+    setBreachWarning('');
+    setBreachCount(0);
+    return;
+  }
+  try {
+    const res = await fetch(`${config.url}/api/safe/checkpassword`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password })
+    });
+    const data = await res.json();
+    if (data.breached) {
+      setBreachWarning(`⚠️ This password has been seen ${data.count} times in breaches.`);
+      setBreachCount(data.count);
+    } else {
+      setBreachWarning('');
+      setBreachCount(0);
+    }
+  } catch (err) {
+    setBreachWarning('');
+    setBreachCount(0);
+  }
+};
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
 
     try {
-      // Validate all required fields
-      if (!formData.name.trim()) {
-        throw new Error('Name is required');
-      }
-      if (!formData.email.trim()) {
-        throw new Error('Email is required');
-      }
-
-      // Validate email format
+      if (!formData.name.trim()) throw new Error('Name is required');
+      if (!formData.email.trim()) throw new Error('Email is required');
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        throw new Error('Please enter a valid email address');
-      }
+      if (!emailRegex.test(formData.email)) throw new Error('Please enter a valid email address');
 
-      // Validate password
       const passwordError = validatePassword(formData.masterPassword);
-      if (passwordError) {
-        throw new Error(passwordError);
-      }
+      if (passwordError) throw new Error(passwordError);
 
       if (formData.masterPassword !== formData.confirmPassword) {
         throw new Error('Passwords do not match');
       }
+      if (breachCount > 0) {
+  throw new Error('Please choose a password that has not been breached.');
+}
 
-      // Remove confirmPassword before sending to API
-      const {  ...registerData } = formData;
-      await onRegister(registerData);
+      // Prepare data for backend: use 'masterPassword' field
+      const { name, email, masterPassword } = formData;
+      await onRegister({ name, email, masterPassword });
 
     } catch (err) {
       setError(err.message);
@@ -149,6 +183,11 @@ function RegisterForm({ onRegister, onSwitchToLogin }) {
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
+            {breachCount > 0 && (
+  <p style={{ color: 'red', fontWeight: 'bold' }}>
+    {breachWarning}
+  </p>
+)}
           </div>
           <p className="form-help">
             Password must be at least 12 characters long and include uppercase, lowercase, 

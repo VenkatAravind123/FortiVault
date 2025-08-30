@@ -14,6 +14,7 @@ function PasswordVault() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [warning, setWarning] = useState(''); // ✅ For Safe Browsing warnings
+  const [breachCount, setBreachCount] = useState(0); // ✅ For HIBP breaches
 
   // Fetch existing passwords
   useEffect(() => {
@@ -50,6 +51,35 @@ function PasswordVault() {
     return data;
   };
 
+  // ✅ Check password breach with HIBP
+  async function verifyPasswordBreach(password) {
+    if (!password) {
+      setWarning('');
+      setBreachCount(0);
+      return;
+    }
+    try {
+      const res = await fetch(`${config.url}/api/safe/checkpassword`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      });
+
+      const data = await res.json();
+      if (data.breached) {
+        setWarning(`⚠️ This password has been seen ${data.count} times in breaches.`);
+        setBreachCount(data.count);
+      } else {
+        setWarning('');
+        setBreachCount(0);
+      }
+    } catch (err) {
+      console.error("Error checking password breach:", err);
+      setWarning('');
+      setBreachCount(0);
+    }
+  }
+
   // ✅ Verify the URL before saving password
   async function verifyUrl(url) {
     try {
@@ -79,12 +109,17 @@ function PasswordVault() {
     e.preventDefault();
 
     try {
-      // ✅ Check the website URL if provided
+      // ✅ Safe Browsing check
       if (newPassword.websiteUrl) {
         const isSafe = await verifyUrl(newPassword.websiteUrl);
-        if (!isSafe) return; // Stop if unsafe
+        if (!isSafe) return;
       }
 
+      // ✅ HIBP password breach check
+      const isPasswordSafe = await verifyPasswordBreach(newPassword.password);
+      if (!isPasswordSafe) return;
+
+      // If both checks pass, save password
       const passwordData = {
         website: newPassword.website,
         websiteUrl: newPassword.websiteUrl,
@@ -97,17 +132,23 @@ function PasswordVault() {
       setNewPassword({ website: '', websiteUrl: '', username: '', password: '' });
       setShowAddForm(false);
       setWarning('');
+      setBreachCount(0);
     } catch (err) {
       alert(err.message || 'Failed to add password');
     }
   };
 
-  // Handle input changes
+  // Handle input changes (with live breach check for password field)
   const handleChange = (e) => {
-    setNewPassword({
-      ...newPassword,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setNewPassword(prev => ({ ...prev, [name]: value }));
+
+    if (name === "password") {
+      clearTimeout(window.hibpTimeout);
+      window.hibpTimeout = setTimeout(() => {
+        verifyPasswordBreach(value);
+      }, 600);
+    }
   };
 
   // Handle delete password
@@ -220,6 +261,12 @@ function PasswordVault() {
                   onChange={handleChange}
                   required
                 />
+                {/* ✅ live breach feedback */}
+                {breachCount > 0 && (
+                  <p style={{ color: 'red', fontWeight: 'bold' }}>
+                    ⚠️ This password has been breached {breachCount} times!
+                  </p>
+                )}
               </div>
               
               <div className="form-group">
@@ -233,14 +280,18 @@ function PasswordVault() {
                 />
               </div>
 
-              {/* ✅ Inline Safe Browsing Warning */}
-              {warning && <p style={{ color: 'red', fontWeight: 'bold' }}>{warning}</p>}
+{/*              
+              {warning && <p style={{ color: 'red', fontWeight: 'bold' }}>{warning}</p>} */}
               
               <div className="form-actions">
                 <button type="button" onClick={() => setShowAddForm(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="primary-button" disabled={!!warning}>
+                <button 
+                  type="submit" 
+                  className="primary-button" 
+                  disabled={!!warning || breachCount > 0}
+                >
                   Save Password
                 </button>
               </div>

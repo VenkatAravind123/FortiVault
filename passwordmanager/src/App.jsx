@@ -18,28 +18,37 @@ function App() {
   // Verify authentication status on app load
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        const res = await fetch(`${config.url}/api/auth/verify`, {
-          method: "GET",
-          credentials: "include", // <-- Important!
-        });
+  try {
+    const res = await fetch(`${config.url}/api/auth/verify`, {
+      method: "GET",
+      credentials: "include",
+    });
 
-        if (!res.ok) {
-          throw new Error("Session expired");
-        }
-        const data = await res.json();
-        setUser(data.user);
-        setIsAuthenticated(true);
-        setCurrentView('vault');
-      } catch (error) {
-        console.error("Authentication error:", error);
-        setIsAuthenticated(false);
-        setCurrentView('login');
-      } finally {
-        setIsLoading(false);
+    if (!res.ok) {
+      // Only log error if not 401 (unauthorized)
+      if (res.status !== 401) {
+        throw new Error("Session expired");
       }
-    };
-
+      setIsAuthenticated(false);
+      setCurrentView('login');
+      setIsLoading(false);
+      return;
+    }
+    const data = await res.json();
+    setUser(data.user);
+    setIsAuthenticated(true);
+    setCurrentView('vault');
+  } catch (error) {
+    // Optionally suppress error log for 401
+    if (error.message !== "Session expired") {
+      console.error("Authentication error:", error);
+    }
+    setIsAuthenticated(false);
+    setCurrentView('login');
+  } finally {
+    setIsLoading(false);
+  }
+};
     checkAuth();
   }, []);
 
@@ -84,7 +93,7 @@ function App() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${config.url}/auth/register`, {
+      const response = await fetch(`${config.url}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
