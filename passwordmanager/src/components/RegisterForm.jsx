@@ -86,6 +86,7 @@ const verifyPasswordBreach = async (password) => {
       setBreachCount(0);
     }
   } catch (err) {
+    console.error('Error checking password breach:', err);
     setBreachWarning('');
     setBreachCount(0);
   }

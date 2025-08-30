@@ -13,8 +13,9 @@ function PasswordVault() {
     password: '',
   });
   const [searchTerm, setSearchTerm] = useState('');
-  const [warning, setWarning] = useState(''); // ✅ For Safe Browsing warnings
-  const [breachCount, setBreachCount] = useState(0); // ✅ For HIBP breaches
+  const [warning, setWarning] = useState(''); // For password breach warning
+  const [breachCount, setBreachCount] = useState(0); // For HIBP breaches
+  const [urlWarning, setUrlWarning] = useState(''); // For Safe Browsing warning
 
   // Fetch existing passwords
   useEffect(() => {
@@ -51,7 +52,7 @@ function PasswordVault() {
     return data;
   };
 
-  // ✅ Check password breach with HIBP
+  // Check password breach with HIBP
   async function verifyPasswordBreach(password) {
     if (!password) {
       setWarning('');
@@ -80,7 +81,7 @@ function PasswordVault() {
     }
   }
 
-  // ✅ Verify the URL before saving password
+  // Verify the URL before saving password and show warning below input
   async function verifyUrl(url) {
     try {
       const res = await fetch(`${config.url}/api/safe/check`, {
@@ -92,14 +93,15 @@ function PasswordVault() {
       const data = await res.json();
 
       if (!data.safe) {
-        setWarning(`⚠️ This site may be unsafe! Threats: ${data.threats.map(t => t.threatType).join(", ")}`);
+        const msg = `⚠️ This site may be unsafe! Threats: ${data.threats.map(t => t.threatType).join(", ")}`;
+        setUrlWarning(msg);
         return false;
       }
-      setWarning('');
+      setUrlWarning('');
       return true;
     } catch (err) {
       console.error("Error verifying URL:", err);
-      setWarning('⚠️ Could not verify site safety. Proceed with caution.');
+      setUrlWarning('⚠️ Could not verify site safety. Proceed with caution.');
       return true; // fallback (allow saving if check fails)
     }
   }
@@ -109,15 +111,11 @@ function PasswordVault() {
     e.preventDefault();
 
     try {
-      // ✅ Safe Browsing check
+      // Safe Browsing check
       if (newPassword.websiteUrl) {
         const isSafe = await verifyUrl(newPassword.websiteUrl);
         if (!isSafe) return;
       }
-
-      // ✅ HIBP password breach check
-      const isPasswordSafe = await verifyPasswordBreach(newPassword.password);
-      if (!isPasswordSafe) return;
 
       // If both checks pass, save password
       const passwordData = {
@@ -133,6 +131,7 @@ function PasswordVault() {
       setShowAddForm(false);
       setWarning('');
       setBreachCount(0);
+      setUrlWarning('');
     } catch (err) {
       alert(err.message || 'Failed to add password');
     }
@@ -148,6 +147,9 @@ function PasswordVault() {
       window.hibpTimeout = setTimeout(() => {
         verifyPasswordBreach(value);
       }, 600);
+    }
+    if (name === "websiteUrl") {
+      setUrlWarning(''); // Clear warning while editing
     }
   };
 
@@ -261,7 +263,7 @@ function PasswordVault() {
                   onChange={handleChange}
                   required
                 />
-                {/* ✅ live breach feedback */}
+                {/* live breach feedback */}
                 {breachCount > 0 && (
                   <p style={{ color: 'red', fontWeight: 'bold' }}>
                     ⚠️ This password has been breached {breachCount} times!
@@ -277,12 +279,21 @@ function PasswordVault() {
                   name="websiteUrl"
                   value={newPassword.websiteUrl}
                   onChange={handleChange}
+                  onBlur={async (e) => {
+                    if (e.target.value) {
+                      await verifyUrl(e.target.value);
+                    } else {
+                      setUrlWarning('');
+                    }
+                  }}
                 />
+                {urlWarning && (
+                  <p style={{ color: 'orange', fontWeight: 'bold' }}>
+                    {urlWarning}
+                  </p>
+                )}
               </div>
-
-{/*              
-              {warning && <p style={{ color: 'red', fontWeight: 'bold' }}>{warning}</p>} */}
-              
+           
               <div className="form-actions">
                 <button type="button" onClick={() => setShowAddForm(false)}>
                   Cancel
