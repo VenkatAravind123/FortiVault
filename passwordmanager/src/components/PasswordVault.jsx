@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PasswordItem from './PasswordItem';
 import config from '../config';
-
+import './passwordvault.css'
 function PasswordVault() {
   const [passwords, setPasswords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -235,6 +235,7 @@ function PasswordVault() {
                   type="text"
                   id="website"
                   name="website"
+                  style={{ color:'black'}}
                   value={newPassword.website}
                   onChange={handleChange}
                   required
@@ -247,6 +248,7 @@ function PasswordVault() {
                   type="text"
                   id="username"
                   name="username"
+                  style={{ color:'black'}}
                   value={newPassword.username}
                   onChange={handleChange}
                   required
@@ -259,6 +261,7 @@ function PasswordVault() {
                   type="password"
                   id="password"
                   name="password"
+                  style={{ color:'black'}}
                   value={newPassword.password}
                   onChange={handleChange}
                   required
@@ -277,6 +280,7 @@ function PasswordVault() {
                   type="text"
                   id="websiteUrl"
                   name="websiteUrl"
+                  style={{ color:'black'}}
                   value={newPassword.websiteUrl}
                   onChange={handleChange}
                   onBlur={async (e) => {

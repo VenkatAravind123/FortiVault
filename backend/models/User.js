@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true // hash this using bcrypt
   },
+  role:{
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  },
   passwords: [passwordSchema] // Embedded password list
 });
 

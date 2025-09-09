@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import './passwordgenerator.css'
 function PasswordGenerator() {
   const [password, setPassword] = useState('');
   const [copied, setCopied] = useState(false);

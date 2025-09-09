@@ -33,7 +33,6 @@ mongoose.connect(dburl).then(() => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/passwords', passwordRoutes);
-// app.use('/api/users', userRoutes);
 app.use('/api/safe',safeRoutes)
 
 // Server Port

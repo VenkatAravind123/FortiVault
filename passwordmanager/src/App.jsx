@@ -5,9 +5,11 @@ import LoginForm from './components/LoginForm';
 import RegisterForm from './components/RegisterForm';
 import PasswordVault from './components/PasswordVault';
 import PasswordGenerator from './components/PasswordGenerator';
+import AdminDashboard from './Admin/AdminDashboard'; // New import
 import LoadingSpinner from './components/LoadingSpinner';
 import logo from './assets/vault.png';
 import config from './config'
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState('login');
@@ -16,41 +18,50 @@ function App() {
   const [error, setError] = useState(null);
 
   // Verify authentication status on app load
-  useEffect(() => {
-    const checkAuth = async () => {
-  try {
-    const res = await fetch(`${config.url}/api/auth/verify`, {
-      method: "GET",
-      credentials: "include",
-    });
+ useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const res = await fetch(`${config.url}/api/auth/verify`, {
+        method: "GET",
+        credentials: "include",
+      });
 
-    if (!res.ok) {
-      // Only log error if not 401 (unauthorized)
-      if (res.status !== 401) {
-        throw new Error("Session expired");
+      if (!res.ok) {
+        setIsAuthenticated(false);
+        setCurrentView('login');
+        setIsLoading(false);
+        return;
       }
+      const data = await res.json();
+      // Check what is returned
+      console.log("Auth verify response:", data);
+
+      // If user is present, set it
+      if (data && data.user) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        setCurrentView('vault');
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setCurrentView('login');
+      }
+    } catch (error) {
+      console.error("Error verifying auth:", error);
       setIsAuthenticated(false);
       setCurrentView('login');
+    } finally {
       setIsLoading(false);
-      return;
     }
-    const data = await res.json();
-    setUser(data.user);
-    setIsAuthenticated(true);
-    setCurrentView('vault');
-  } catch (error) {
-    // Optionally suppress error log for 401
-    if (error.message !== "Session expired") {
-      console.error("Authentication error:", error);
-    }
-    setIsAuthenticated(false);
-    setCurrentView('login');
-  } finally {
-    setIsLoading(false);
-  }
-};
-    checkAuth();
-  }, []);
+  };
+  checkAuth();
+}, []);
+
+  useEffect(() => {
+  // Add this to debug your user state
+  console.log("Current user:", user);
+}, [user]);
+
 
   // Update the handleLogin function
   const handleLogin = async (credentials) => {
@@ -172,6 +183,14 @@ function App() {
         return <PasswordVault user={user} />;
       case 'generator':
         return <PasswordGenerator />;
+      case 'admin':
+        // Only render admin dashboard if user is an admin
+        if (user && user.role === 'admin') {
+          return <AdminDashboard />;
+        }
+        // Fallback to vault if somehow a non-admin reaches here
+        setCurrentView('vault');
+        return <PasswordVault user={user} />;
       default:
         return <PasswordVault user={user} />;
     }
@@ -191,6 +210,18 @@ function App() {
         {isAuthenticated && (
           <div className="header-wrapper">
             <nav>
+              {/* Admin Dashboard Button - Only visible to admins */}
+              {console.log("User in render:", user)}
+            {console.log("Is admin?", user?.role === 'admin')}
+            
+              {user && user.role === 'admin' && (
+    <button
+      className={`${currentView === 'admin' ? 'active' : ''} admin-button`}
+      onClick={() => setCurrentView('admin')}
+    >
+      👑 
+    </button>
+  )}
               <button 
                 className={currentView === 'vault' ? 'active' : ''}
                 onClick={() => setCurrentView('vault')}
@@ -206,7 +237,9 @@ function App() {
             </nav>
             
             <div className="user-section">
-              <span className="user-email">{user.email}</span>
+              <span className="user-email">
+                {user.role === 'admin' ? '👑 ' : ''}{user.email}
+              </span>
               <button 
                 onClick={handleLogout} 
                 className="logout-button"

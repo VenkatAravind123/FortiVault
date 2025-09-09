@@ -1,36 +1,46 @@
 import React, { useState } from 'react';
-import { FiExternalLink } from "react-icons/fi";
+import { FiExternalLink, FiEye, FiEyeOff, FiTrash2 } from "react-icons/fi";
+import './passworditem.css'
 export default function PasswordItem({ password, onDelete }) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <div className="password-item">
       <div>
-        <strong>{password.website}</strong>
+        <strong style={{ color: '#ffff' }}>{password.website}</strong>
         {password.websiteUrl && (
-          <a href={password.websiteUrl} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 8 }}>
+          <a 
+            href={password.websiteUrl.startsWith('http') ? password.websiteUrl : `https://${password.websiteUrl}`} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            style={{ marginLeft: 8 }}
+            title="Visit website"
+          >
             <FiExternalLink />
           </a>
         )}
       </div>
       <div>Username: {password.username}</div>
-      <div>
+      <div className="password-display1">
         Password:{" "}
-        {showPassword ? password.password : "••••••••"}
+        <span className="password-text1">
+          {showPassword ? password.password : "••••••••"}
+        </span>
         <button
           type="button"
           onClick={() => setShowPassword((v) => !v)}
-          style={{ marginLeft: 8 }}
+          className="eye-button"
+          title={showPassword ? "Hide password" : "Show password"}
         >
-          {showPassword ? "Hide" : "Show"}
+          {showPassword ? <FiEyeOff /> : <FiEye />}
         </button>
       </div>
       <button
         className="delete-btn"
         onClick={() => onDelete(password._id)}
-        style={{ marginTop: 8 }}
+        title="Delete password"
       >
-        Delete
+        <FiTrash2 /> Delete
       </button>
     </div>
   );

@@ -137,6 +137,7 @@ const verifyPasswordBreach = async (password) => {
             type="text"
             id="name"
             name="name"
+            style={{color:"black"}}
             value={formData.name}
             onChange={handleChange}
             placeholder="Enter your full name"
@@ -153,6 +154,7 @@ const verifyPasswordBreach = async (password) => {
             type="email"
             id="email"
             name="email"
+            style={{color:"black"}}
             value={formData.email}
             onChange={handleChange}
             placeholder="your@email.com"
@@ -169,6 +171,7 @@ const verifyPasswordBreach = async (password) => {
             <input
               type={showPassword ? "text" : "password"}
               id="masterPassword"
+              style={{color:"black"}}
               name="masterPassword"
               value={formData.masterPassword}
               onChange={handleChange}
@@ -205,6 +208,7 @@ const verifyPasswordBreach = async (password) => {
               type={showConfirmPassword ? "text" : "password"}
               id="confirmPassword"
               name="confirmPassword"
+              style={{color:"black"}}
               value={formData.confirmPassword}
               onChange={handleChange}
               placeholder="Confirm your master password"
